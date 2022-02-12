@@ -4,15 +4,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("./constants");
+const path_1 = __importDefault(require("path"));
 const Post_1 = require("./entities/Post");
-const posix_1 = __importDefault(require("path/posix"));
+const User_1 = require("./entities/User");
 exports.default = {
     allowGlobalContext: true,
     migrations: {
-        path: posix_1.default.join(__dirname, './migrations'),
+        path: path_1.default.join(__dirname, './migrations'),
         glob: '!(*.d).{js,ts}',
     },
-    entities: [Post_1.Post],
+    entities: [Post_1.Post, User_1.User],
     dbName: 'reddit-clone',
     user: 'postgres',
     password: 'postgres',

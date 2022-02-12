@@ -3,7 +3,7 @@ import { Field, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
 @Entity()
-export class Post {
+export class User {
   // Removing the Field decorator will prevent field from being exposed in graphql schema
   @Field(() => Int)
   @PrimaryKey()
@@ -18,6 +18,9 @@ export class Post {
   updatedAt?: Date = new Date();
 
   @Field()
+  @Property({type: 'text', unique: true})
+  username!: string;
+
   @Property({type: 'text'})
-  title!: string;
-}
+  password!: string;
+};
