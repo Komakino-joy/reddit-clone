@@ -42,7 +42,7 @@ const main = async () => {
     app.set("trust proxy", 1);
     app.use(
       cors({
-        origin: process.env.CORS_ORIGIN,
+        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
         credentials: true,
       })
     );
@@ -75,7 +75,7 @@ const main = async () => {
     });
 
     // Creating a graphql endpoint
-    apolloServer.applyMiddleware({ app })
+    apolloServer.applyMiddleware({ app, cors: false })
 
     const port = process.env.PORT || 4000
 

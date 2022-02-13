@@ -34,7 +34,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const redis = new ioredis_1.default(process.env.REDIS_URL || "localhost:6379");
     app.set("trust proxy", 1);
     app.use((0, cors_1.default)({
-        origin: process.env.CORS_ORIGIN,
+        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
         credentials: true,
     }));
     app.use((0, express_session_1.default)({
@@ -60,7 +60,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         }),
         context: ({ req, res }) => ({ em: orm.em, req, res })
     });
-    apolloServer.applyMiddleware({ app });
+    apolloServer.applyMiddleware({ app, cors: false });
     const port = process.env.PORT || 4000;
     app.listen(port, () => {
         console.log('Server started on localhost:', port);
