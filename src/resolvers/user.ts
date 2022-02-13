@@ -33,24 +33,56 @@ class UserResponse {
 @Resolver()
 export class UserResolver {
 
-    @Mutation(() => User)
+    @Mutation(() => UserResponse)
     async register( 
         @Arg('options') options: UserNamePasswordInput,
         @Ctx() { em }: MyContext
-        ) {
+        ): Promise<UserResponse> {
+            if (options.username.length <= 2) {
+                return {
+                    errors: [{
+                        field: "username",
+                        message: "username length must be longer than 2 characters"
+                    }],
+                };
+            };
+
+            if (options.password.length <= 3) {
+                return {
+                    errors: [{
+                        field: "password",
+                        message: "password length must be longer than 3 characters"
+                    }],
+                };
+            }; 
+
             const hashedPassword = await argon2.hash(options.password);
             const user = em.create(User, { 
                 username: options.username, 
                 password: hashedPassword 
             });
-            await em.persistAndFlush(user);
-            return user
+
+            try {
+                await em.persistAndFlush(user);
+            } catch (error) {
+                // Duplicate username error.
+                if (error.code = '23505' || error.detail.includes("already exists")) {
+                    return {
+                        errors: [{
+                            field: 'username',
+                            message: 'username already taken.'
+                        }]
+                    }
+                }
+            }
+
+            return { user }
     };
 
     @Mutation(() => UserResponse)
     async login( 
         @Arg('options') options: UserNamePasswordInput,
-        @Ctx() { em }: MyContext
+        @Ctx() { em, req }: MyContext
         ): Promise<UserResponse> {
             const user = await em.findOne(User, { username: options.username.toLowerCase() });
 
@@ -75,6 +107,8 @@ export class UserResolver {
                     ],
                 };
             }
+
+            req.session.userId = user.id
 
             return {
                 user,
