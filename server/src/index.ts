@@ -1,7 +1,6 @@
 import "reflect-metadata";
 import { MikroORM} from '@mikro-orm/core';
 import { __prod__ } from './constants';
-// import { Post } from './entities/Post';
 import microConfig from './mikro-orm.config';
 import express from 'express';
 import { ApolloServer } from 'apollo-server-express';
@@ -14,6 +13,8 @@ import session from "express-session";
 import connectRedis from "connect-redis";
 import cors from "cors";
 import { MyContext } from "./types";
+// import { User } from "./entities/User";
+// import { Post } from './entities/Post';
 
 declare module 'express-session' {
   export interface SessionData {
@@ -24,6 +25,7 @@ declare module 'express-session' {
 const main = async () => {
     // Connect to Database
     const orm = await MikroORM.init(microConfig);
+    // orm.em.nativeDelete(User, {})
     // Run Migrations
     await orm.getMigrator().up();
     // Run SQL
@@ -71,7 +73,8 @@ const main = async () => {
             resolvers: [HelloResolver, PostResolver, UserResolver],
             validate: false
         }),
-        context: ({ req, res }): MyContext => ({ em: orm.em, req, res })
+        // variables in the context can be accessed in my resolvers
+        context: ({ req, res }): MyContext => ({ em: orm.em, req, res, redis })
     });
 
     // Creating a graphql endpoint
