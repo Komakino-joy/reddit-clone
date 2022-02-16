@@ -1,7 +1,6 @@
+// needed for typeorm to work
 import "reflect-metadata";
-import { MikroORM} from '@mikro-orm/core';
 import { __prod__ } from './constants';
-import microConfig from './mikro-orm.config';
 import express from 'express';
 import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
@@ -13,8 +12,10 @@ import session from "express-session";
 import connectRedis from "connect-redis";
 import cors from "cors";
 import { MyContext } from "./types";
-// import { User } from "./entities/User";
-// import { Post } from './entities/Post';
+
+import { createConnection } from 'typeorm';
+import { User } from "./entities/User";
+import { Post } from "./entities/Post";
 
 declare module 'express-session' {
   export interface SessionData {
@@ -24,18 +25,15 @@ declare module 'express-session' {
 
 const main = async () => {
     // Connect to Database
-    const orm = await MikroORM.init(microConfig);
-    // orm.em.nativeDelete(User, {})
-    // Run Migrations
-    await orm.getMigrator().up();
-    // Run SQL
-    // Create Post
-    // const post = orm.em.create(Post, { title: 'My first post' });
-    // await orm.em.persistAndFlush(post);
-
-    // Fetch post
-    // const posts = await orm.em.find(Post, {});
-    // console.log(posts)
+    const conn = await createConnection({
+      type: 'postgres',
+      database: 'reddit-clone2',
+      username: 'postgres',
+      password: 'postgres',
+      logging: true,
+      synchronize: true,
+      entities: [Post, User]
+    });
 
     const app = express();
 
@@ -74,7 +72,7 @@ const main = async () => {
             validate: false
         }),
         // variables in the context can be accessed in my resolvers
-        context: ({ req, res }): MyContext => ({ em: orm.em, req, res, redis })
+        context: ({ req, res }): MyContext => ({ req, res, redis })
     });
 
     // Creating a graphql endpoint
