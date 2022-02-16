@@ -61,7 +61,7 @@ UserResponse = __decorate([
 ], UserResponse);
 ;
 let UserResolver = class UserResolver {
-    changePassword(token, newPassword, { redis, em }) {
+    changePassword(token, newPassword, { redis, em, req }) {
         return __awaiter(this, void 0, void 0, function* () {
             if (newPassword.length <= 3) {
                 return { errors: [{
@@ -70,7 +70,8 @@ let UserResolver = class UserResolver {
                         }] };
             }
             ;
-            const userId = yield redis.get(constants_1.FORGOT_PASSWORD_PREFIX + token);
+            const key = constants_1.FORGOT_PASSWORD_PREFIX + token;
+            const userId = yield redis.get(key);
             if (!userId) {
                 return { errors: [{
                             field: "token",
@@ -88,6 +89,8 @@ let UserResolver = class UserResolver {
             ;
             user.password = yield argon2_1.default.hash(newPassword);
             yield em.persistAndFlush(user);
+            yield redis.del(key);
+            req.session.userId = user.id;
             return { user };
         });
     }
