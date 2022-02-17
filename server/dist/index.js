@@ -28,7 +28,7 @@ const typeorm_1 = require("typeorm");
 const User_1 = require("./entities/User");
 const Post_1 = require("./entities/Post");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
-    const conn = yield (0, typeorm_1.createConnection)({
+    yield (0, typeorm_1.createConnection)({
         type: 'postgres',
         database: 'reddit-clone2',
         username: 'postgres',

@@ -25,7 +25,7 @@ declare module 'express-session' {
 
 const main = async () => {
     // Connect to Database
-    const conn = await createConnection({
+     await createConnection({
       type: 'postgres',
       database: 'reddit-clone2',
       username: 'postgres',

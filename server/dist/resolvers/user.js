@@ -33,7 +33,6 @@ const UserNamePasswordInput_1 = require("./UserNamePasswordInput");
 const validateRegister_1 = require("../utils/validateRegister");
 const sendEmail_1 = require("../utils/sendEmail");
 const uuid_1 = require("uuid");
-const typeorm_1 = require("typeorm");
 let FieldError = class FieldError {
 };
 __decorate([
@@ -126,18 +125,11 @@ let UserResolver = class UserResolver {
             const hashedPassword = yield argon2_1.default.hash(options.password);
             let user;
             try {
-                const result = yield (0, typeorm_1.getConnection)()
-                    .createQueryBuilder()
-                    .insert()
-                    .into(User_1.User)
-                    .values({
+                user = yield User_1.User.create({
                     username: options.username,
                     email: options.email,
                     password: hashedPassword
-                })
-                    .returning('*')
-                    .execute();
-                user = result.raw;
+                }).save();
             }
             catch (error) {
                 if (error.code = '23505' || error.detail.includes("already exists")) {
@@ -149,7 +141,7 @@ let UserResolver = class UserResolver {
                     };
                 }
             }
-            req.session.userId = user.id;
+            req.session.userId = user === null || user === void 0 ? void 0 : user.id;
             return { user };
         });
     }

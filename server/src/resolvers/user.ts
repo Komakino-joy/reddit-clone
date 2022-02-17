@@ -7,7 +7,7 @@ import { UserNamePasswordInput } from "./UserNamePasswordInput";
 import { validateRegister } from "../utils/validateRegister";
 import { sendEmail } from "../utils/sendEmail";
 import { v4 } from "uuid";
-import { getConnection } from "typeorm";
+// import { getConnection } from "typeorm";
 
 @ObjectType()
 class FieldError {
@@ -127,18 +127,25 @@ export class UserResolver {
             let user;
 
             try {
-                const result = await getConnection()
-                .createQueryBuilder()
-                .insert()
-                .into(User)
-                .values({                
+                user = await User.create({
                     username: options.username, 
                     email: options.email,
                     password: hashedPassword
-                })
-                .returning('*')
-                .execute();
-                user = result.raw
+                }).save();
+                
+                // Using Query Builder example
+                // const result = await getConnection()
+                // .createQueryBuilder()
+                // .insert()
+                // .into(User)
+                // .values({                
+                //     username: options.username, 
+                //     email: options.email,
+                //     password: hashedPassword
+                // })
+                // .returning('*')
+                // .execute();
+                // user = result.raw[0]
             } catch (error) {
                 // Duplicate username error.
                 if (error.code = '23505' || error.detail.includes("already exists")) {
@@ -154,7 +161,7 @@ export class UserResolver {
             // store userId session
             // This will store a cookie on the user
             // keep them logged in
-            req.session.userId = user.id;
+            req.session.userId = user?.id;
 
             return { user };
     };

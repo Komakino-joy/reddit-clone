@@ -1,5 +1,17 @@
 import { Post } from "../entities/Post";
-import { Arg, Int, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Field, InputType, Int, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
+import { MyContext } from "src/types";
+import { isAuth } from "../middleware/isAuth";
+
+
+@InputType() 
+class PostInput {
+    @Field()
+    title: string;
+    
+    @Field()
+    text: string;
+}
 
 // String and Int can be inferred, but using them explicitly below
 // @Arg('title', () => String) same as @Arg('title')
@@ -16,9 +28,15 @@ export class PostResolver {
     };
 
     @Mutation(() => Post)
-    async createPost(@Arg('title', () => String) title: string ): Promise<Post> {
-            // 2 SQL queries are created in the background
-            return Post.create({title}).save();  
+    @UseMiddleware(isAuth)
+    async createPost(
+        @Arg("input") input: PostInput,
+        @Ctx() {req}: MyContext
+        ): Promise<Post> {
+            return Post.create({
+                ...input,
+                creatorId: req.session.userId
+            }).save();  
     };
 
     @Mutation(() => Post, {nullable: true})
