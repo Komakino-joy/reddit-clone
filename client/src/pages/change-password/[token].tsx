@@ -11,11 +11,10 @@ import { useChangePasswordMutation } from '../../generated/graphql';
 import { createUrqlClient } from '../../utils/createUrqlClient';
 import { toErrorMap } from '../../utils/toErrorMap';
 
-const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
+const ChangePassword: NextPage = () => {
         const router = useRouter();
         const [{}, changePassword ] = useChangePasswordMutation();
         const [tokenError, setTokenError] = useState('');
-
         return (
             <Wrapper variant='small'>
                 <Formik 
@@ -24,7 +23,7 @@ const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
                         async (values, {setErrors}) => {
                             const response = await changePassword({ 
                                 newPassword: values.newPassword, 
-                                token, 
+                                token: typeof router.query.token === "string" ? router.query.token : '', 
                             });
                             if (response.data?.changePassword.errors) {
                                 const errorMap = toErrorMap(response.data.changePassword.errors);
@@ -64,15 +63,6 @@ const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
                 </Formik>
             </Wrapper>
         );
-};
-
-
-// getInitialProps may assume ssr is on, not sure.
-ChangePassword.getInitialProps = ({query}) => {
-    return {
-        // Get token from the url
-        token: query.token as string
-    }
 };
 
 // Note make sure to add wuthUrqlClient any time we use a mutation or a query.

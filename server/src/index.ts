@@ -16,24 +16,28 @@ import { MyContext } from "./types";
 import { createConnection } from 'typeorm';
 import { User } from "./entities/User";
 import { Post } from "./entities/Post";
+import path from "path";
 
 declare module 'express-session' {
   export interface SessionData {
     user: { [key: string]: any };
   }
 }
-
+// re-run save
 const main = async () => {
     // Connect to Database
-     await createConnection({
+     const conn = await createConnection({
       type: 'postgres',
       database: 'reddit-clone2',
       username: 'postgres',
       password: 'postgres',
       logging: true,
       synchronize: true,
+      migrations: [path.join(__dirname, ".migrations/*")],
       entities: [Post, User]
     });
+
+    await conn.runMigrations()
 
     const app = express();
 
