@@ -33,15 +33,29 @@ export const cursorPagination = (): Resolver => {
     // check if the data is in the cache and then return the data
     // from the query, get the field key
     const fieldKey = `${fieldName}(${stringifyVariables(fieldArgs)})`
-    const isItInTheCache = cache.resolve(entityKey, fieldKey)
+    const isItInTheCache = cache.resolve(cache.resolve(entityKey, fieldKey) as string, "posts");
     info.partial = !isItInTheCache;
+    let hasMore = true;
     const results: string[] = [];
     fieldInfos.forEach( fi => {
-      const data = cache.resolve(entityKey, fi.fieldKey) as string[];
+      const key = cache.resolve(entityKey, fi.fieldKey) as string;
+      const data = cache.resolve(key, 'posts') as string[];
+      const _hasMore = cache.resolve(key, 'hasMore');
+      if(!_hasMore) {
+        hasMore = _hasMore as boolean;
+      }
       results.push(...data)
     })
 
-    return results;
+    return {
+      // Invalid resolver value: The field at `Query.posts({"cursor":"","limit":10})` is a scalar (number, boolean, etc), but the GraphQL query 
+      // expects a selection set for this field.
+      // (Caused At: "Posts" query)
+      //FIX
+      __typename: "PaginatedPosts",
+      hasMore,
+      posts: results
+    };
   };
 };
 
@@ -53,6 +67,16 @@ export const createUrqlClient = ( ssrExchange: any ) => ({
     exchanges: [ 
       dedupExchange, 
       cacheExchange({
+
+        // urql-exchange-graphcache.mjs?1bf2:131 Invalid key: The GraphQL query at the field at `Query.posts({"cursor":"","limit":10})` 
+        // has a selection set, but no key could be generated for the data at this field.
+        // You have to request `id` or `_id` fields for all selection sets or create a custom `keys` config for `PaginatedPosts`.
+        // Entities without keys will be embedded directly on the parent entity. If this is intentional, create a `keys` config for 
+        // `PaginatedPosts` that always returns null.
+        // FIX
+        keys: {
+          PaginatedPosts: () => null,
+        },
         resolvers: {
           Query: {
             // name matches our post graphql
