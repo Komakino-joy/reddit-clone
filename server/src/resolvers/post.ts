@@ -1,8 +1,9 @@
 import { Post } from "../entities/Post";
-import { Arg, Ctx, Field, FieldResolver, Info, InputType, Int, Mutation, ObjectType, Query, Resolver, Root, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Field, FieldResolver, InputType, Int, Mutation, ObjectType, Query, Resolver, Root, UseMiddleware } from "type-graphql";
 import { MyContext } from "src/types";
 import { isAuth } from "../middleware/isAuth";
 import { getConnection } from "typeorm";
+import { UpVote } from "../entities/UpVote";
 
 
 @InputType() 
@@ -34,6 +35,37 @@ export class PostResolver {
     ) {
         return root.text.slice(0,50);
     };
+
+    @Mutation(() => Boolean)
+    @UseMiddleware(isAuth)
+    async vote(
+        @Arg('postId', () => Int) postId: number,
+        @Arg('value', () => Int) value: number,
+        @Ctx() {req}: MyContext
+    ) {
+        const isUpVote = value != -1;
+        const realValue = isUpVote ? 1 : -1;
+        const { userId } = req.session
+        await UpVote.insert({
+            userId,
+            postId,
+            value: realValue
+        });
+        await getConnection().query(`
+            START TRANSACTION;
+
+                insert into upvote ("userId", "postId", value)
+                values (${userId}, ${postId}, ${realValue});
+
+                update post
+                set points = points + ${realValue}
+                where id = ${postId};
+
+            COMMIT;
+        `);
+
+        return true;
+    }
 
     @Query(() => PaginatedPosts)
     async posts(

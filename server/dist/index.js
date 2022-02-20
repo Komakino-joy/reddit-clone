@@ -28,6 +28,7 @@ const typeorm_1 = require("typeorm");
 const User_1 = require("./entities/User");
 const Post_1 = require("./entities/Post");
 const path_1 = __importDefault(require("path"));
+const UpVote_1 = require("./entities/UpVote");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const conn = yield (0, typeorm_1.createConnection)({
         type: 'postgres',
@@ -37,7 +38,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         logging: true,
         synchronize: true,
         migrations: [path_1.default.join(__dirname, ".migrations/*")],
-        entities: [Post_1.Post, User_1.User]
+        entities: [Post_1.Post, User_1.User, UpVote_1.UpVote]
     });
     yield conn.runMigrations();
     const app = (0, express_1.default)();

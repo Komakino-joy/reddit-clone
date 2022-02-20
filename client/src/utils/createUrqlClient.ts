@@ -9,7 +9,7 @@ const errorExchange: Exchange = ({ forward }) => ops$ => {
   return pipe(
     forward(ops$),
     tap(({ error }) => {
-      console.log(error)
+      console.log({error})
       if (error?.message.includes("Not authenticated")) {
         router.replace("/login");
       }
@@ -86,6 +86,14 @@ export const createUrqlClient = ( ssrExchange: any ) => ({
 
         updates: {
           Mutation: {
+            createPost: (_result, args, cache, info ) => {
+              const allFields = cache.inspectFields('Query');
+              const fieldInfos = allFields.filter(info => info.fieldName === 'posts'); // Making sure this is posts.
+              fieldInfos.forEach((fi) => {
+                cache.invalidate('Query', 'posts', fi.arguments || {});
+              })
+            },
+
             logout: (_result, args, cache, info ) => {
               betterUpdateQuery<LogoutMutation, MeQuery>(
                 cache,

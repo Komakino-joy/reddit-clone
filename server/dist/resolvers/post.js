@@ -26,6 +26,7 @@ const Post_1 = require("../entities/Post");
 const type_graphql_1 = require("type-graphql");
 const isAuth_1 = require("../middleware/isAuth");
 const typeorm_1 = require("typeorm");
+const UpVote_1 = require("../entities/UpVote");
 let PostInput = class PostInput {
 };
 __decorate([
@@ -57,6 +58,31 @@ let PostResolver = class PostResolver {
         return root.text.slice(0, 50);
     }
     ;
+    vote(postId, value, { req }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const isUpVote = value != -1;
+            const realValue = isUpVote ? 1 : -1;
+            const { userId } = req.session;
+            yield UpVote_1.UpVote.insert({
+                userId,
+                postId,
+                value: realValue
+            });
+            yield (0, typeorm_1.getConnection)().query(`
+            START TRANSACTION;
+
+                insert into upvote ("userId", "postId", value)
+                values (${userId}, ${postId}, ${realValue});
+
+                update post
+                set points = points + ${realValue}
+                where id = ${postId};
+
+            COMMIT;
+        `);
+            return true;
+        });
+    }
     posts(limit, cursor) {
         return __awaiter(this, void 0, void 0, function* () {
             const realLimit = Math.min(50, limit);
@@ -126,6 +152,16 @@ __decorate([
     __metadata("design:paramtypes", [Post_1.Post]),
     __metadata("design:returntype", void 0)
 ], PostResolver.prototype, "textSnippet", null);
+__decorate([
+    (0, type_graphql_1.Mutation)(() => Boolean),
+    (0, type_graphql_1.UseMiddleware)(isAuth_1.isAuth),
+    __param(0, (0, type_graphql_1.Arg)('postId', () => type_graphql_1.Int)),
+    __param(1, (0, type_graphql_1.Arg)('value', () => type_graphql_1.Int)),
+    __param(2, (0, type_graphql_1.Ctx)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, Object]),
+    __metadata("design:returntype", Promise)
+], PostResolver.prototype, "vote", null);
 __decorate([
     (0, type_graphql_1.Query)(() => PaginatedPosts),
     __param(0, (0, type_graphql_1.Arg)('limit', () => type_graphql_1.Int)),
